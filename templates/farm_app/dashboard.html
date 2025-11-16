@@ -9,11 +9,9 @@
         <p class="mb-0">
           This application allows farmers to securely upload crop images,
           describe their farm conditions, and track crop health over time.
-          After uploading a crop, you can run an automated health analysis
-          using a smart image processing engine. The analysis results are
-          saved in your dashboard, while AWS services (S3, SQS, SNS, Lambda
-          and DynamoDB) work in the background to store data and send
-          notifications about your crop health insights.
+          After uploading a crop, user can run health analysis
+          using a python custom library. The analysis results are
+          saved in the dashboard.
         </p>
       </div>
     </div>
@@ -29,25 +27,35 @@
   <div class="row">
     {% for crop in crops %}
       <div class="col-md-4 mb-3">
-        <div class="card h-100 shadow-sm">
-          {% if crop.s3_image_url %}
-            <img src="{{ crop.s3_image_url }}" class="card-img-top" alt="{{ crop.name }}">
-          {% else %}
-            <img src="{{ crop.image.url }}" class="card-img-top" alt="{{ crop.name }}">
-          {% endif %}
-          <div class="card-body d-flex flex-column">
+    <div class="card h-100 shadow-sm">
+
+        {% if crop.s3_image_url %}
+            <img src="{{ crop.s3_image_url }}" class="card-img-top" alt="{{ crop.name }}" style="height: 240px; object-fit: cover;">
+        {% else %}
+            <img src="{{ crop.image.url }}" class="card-img-top" alt="{{ crop.name }}" style="height: 240px; object-fit: cover;">
+        {% endif %}
+
+        <div class="card-body">
             <h5 class="card-title">{{ crop.name }}</h5>
-            <p class="card-text small text-muted">
-              Status:
-              <span class="badge bg-{% if crop.status == 'analyzed' %}success{% else %}warning{% endif %}">
-                {{ crop.get_status_display }}
-              </span>
+
+            <p class="card-text small text-muted mb-1">
+                Status:
+                <span class="badge bg-{% if crop.status == 'analyzed' %}success{% else %}warning{% endif %}">
+                    {{ crop.get_status_display }}
+                </span>
             </p>
-            <p class="card-text flex-grow-1">{{ crop.summary|truncatechars:100 }}</p>
-            <a href="{% url 'crop_detail' crop.pk %}" class="btn btn-outline-success mt-auto">View Details</a>
-          </div>
+
+            <p class="card-text mb-3">
+                {{ crop.summary|truncatechars:100 }}
+            </p>
+
+            <a href="{% url 'crop_detail' crop.pk %}" class="btn btn-outline-success w-100">
+                View Details
+            </a>
         </div>
-      </div>
+    </div>
+</div>
+
     {% endfor %}
   </div>
 {% else %}

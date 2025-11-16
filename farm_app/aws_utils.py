@@ -6,16 +6,6 @@ from django.conf import settings
 
 @lru_cache(maxsize=1)
 def get_aws_config():
-    """
-    Load one JSON secret from AWS Secrets Manager.
-    Example secret value (JSON):
-    {
-      "S3_BUCKET_NAME": "cpp-my-test-bucket",
-      "SQS_QUEUE_URL": "https://sqs.eu-west-1.amazonaws.com/123456789012/smartfarm-queue",
-      "SNS_TOPIC_ARN": "arn:aws:sns:eu-west-1:123456789012:smartfarm-topic",
-      "DYNAMODB_TABLE": "SmartFarmAnalysis"
-    }
-    """
     region = settings.AWS_REGION_NAME
     secret_name = settings.AWS_SECRET_NAME
 
@@ -41,9 +31,6 @@ def get_sqs_client():
 
 
 def upload_file_to_s3(local_path: str, s3_key: str) -> str:
-    """
-    Upload local file to S3 and return public URL (assuming bucket is public or behind CloudFront).
-    """
     conf = get_aws_config()
     bucket_name = conf['S3_BUCKET_NAME']
     s3 = get_s3_client()
@@ -55,9 +42,7 @@ def upload_file_to_s3(local_path: str, s3_key: str) -> str:
 
 
 def send_analysis_message_to_sqs(message_dict: dict):
-    """
-    Send JSON message to SQS. Lambda will be triggered by this queue.
-    """
+    # Sending JSON message to SQS, lambda will be triggered by this queue.
     conf = get_aws_config()
     queue_url = conf['SQS_QUEUE_URL']
 

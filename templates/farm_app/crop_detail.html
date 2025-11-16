@@ -9,8 +9,15 @@
       {% else %}
         <img src="{{ crop.image.url }}" class="card-img-top" alt="{{ crop.name }}">
       {% endif %}
+
       <div class="card-body">
         <h3 class="card-title">{{ crop.name }}</h3>
+
+        <p class="text-muted mb-1">
+          Uploaded by:
+          <strong>{{ crop.user.username }}</strong>
+        </p>
+
         <p class="card-text">{{ crop.summary }}</p>
 
         <p class="card-text">
@@ -20,22 +27,29 @@
           </span>
         </p>
 
-        <div class="mb-3">
-          <a href="{% url 'crop_update' crop.pk %}" class="btn btn-outline-primary btn-sm">Edit</a>
-          <a href="{% url 'crop_delete' crop.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
-        </div>
+        {% if crop.user == user %}
+          <div class="mb-3">
+            <a href="{% url 'crop_update' crop.pk %}" class="btn btn-outline-primary btn-sm">Edit</a>
+            <a href="{% url 'crop_delete' crop.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
+          </div>
 
-        {% if crop.status == 'pending' %}
-          <a href="{% url 'crop_analyze' crop.pk %}" class="btn btn-success">
-            Analyze Crop Health
-          </a>
+          {% if crop.status == 'pending' %}
+            <a href="{% url 'crop_analyze' crop.pk %}" class="btn btn-success">
+              Analyze Crop Health
+            </a>
+          {% else %}
+            <p class="text-muted small mb-1">
+              Last analyzed at: {{ crop.analyzed_at|date:"Y-m-d H:i" }}
+            </p>
+            <a href="{% url 'crop_analyze' crop.pk %}" class="btn btn-outline-success btn-sm">
+              Re-run Analysis
+            </a>
+          {% endif %}
+        
         {% else %}
-          <p class="text-muted small mb-1">
-            Last analyzed at: {{ crop.analyzed_at|date:"Y-m-d H:i" }}
+          <p class="text-muted mt-3">
+            You can view this crop, but only the owner can edit or analyze it.
           </p>
-          <a href="{% url 'crop_analyze' crop.pk %}" class="btn btn-outline-success btn-sm">
-            Re-run Analysis
-          </a>
         {% endif %}
       </div>
     </div>
@@ -45,10 +59,13 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <h4 class="card-title">Analysis Result</h4>
+
         {% if crop.analyzed_result %}
-          <pre class="small bg-light p-3 rounded" style="white-space: pre-wrap;">{{ crop.analyzed_result }}</pre>
+          <pre class="small bg-light p-3 rounded" style="white-space: pre-wrap; max-height: 500px; overflow-y: auto;">
+{{ crop.analyzed_result }}
+          </pre>
         {% else %}
-          <p class="text-muted">No analysis results yet. Click "Analyze Crop Health" to run the analysis.</p>
+          <p class="text-muted">No analysis results yet. Owner of this crop must run the analysis.</p>
         {% endif %}
       </div>
     </div>

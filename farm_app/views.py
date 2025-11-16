@@ -54,7 +54,7 @@ def logout_view(request):
 
 @login_required
 def dashboard_view(request):
-    crops = Crop.objects.filter(user=request.user).order_by('-created_at')
+    crops = Crop.objects.all().order_by('-created_at')
     return render(request, 'farm_app/dashboard.html', {'crops': crops})
 
 
@@ -83,12 +83,17 @@ def crop_create_view(request):
 
 @login_required
 def crop_update_view(request, pk):
-    crop = get_object_or_404(Crop, pk=pk, user=request.user)
+    crop = get_object_or_404(Crop, pk=pk)
+
+    if crop.user != request.user:
+        messages.error(request, "You cannot edit another user's crop.")
+        return redirect('crop_detail', pk=pk)
+
     if request.method == 'POST':
         form = CropForm(request.POST, request.FILES, instance=crop)
         if form.is_valid():
             crop = form.save()
-            # If new image uploaded, re-upload to S3
+
             if 'image' in form.changed_data:
                 local_path = crop.image.path
                 s3_key = f"user_{request.user.id}/crops/{os.path.basename(local_path)}"
@@ -100,43 +105,49 @@ def crop_update_view(request, pk):
                 crop.save()
 
             messages.success(request, 'Crop updated successfully.')
-            return redirect('dashboard')
+            return redirect('crop_detail', pk=pk)
     else:
         form = CropForm(instance=crop)
+
     return render(request, 'farm_app/crop_form.html', {'form': form, 'title': 'Update Crop'})
 
 
 @login_required
 def crop_delete_view(request, pk):
-    crop = get_object_or_404(Crop, pk=pk, user=request.user)
+    crop = get_object_or_404(Crop, pk=pk)
+
+    if crop.user != request.user:
+        messages.error(request, "You cannot delete another user's crop.")
+        return redirect('crop_detail', pk=pk)
+
     if request.method == 'POST':
         crop.delete()
         messages.success(request, 'Crop deleted successfully.')
         return redirect('dashboard')
+
     return render(request, 'farm_app/crop_confirm_delete.html', {'crop': crop})
+
 
 
 @login_required
 def crop_detail_view(request, pk):
-    crop = get_object_or_404(Crop, pk=pk, user=request.user)
+    crop = get_object_or_404(Crop, pk=pk)
     return render(request, 'farm_app/crop_detail.html', {'crop': crop})
 
 
 @login_required
 def analyze_crop_view(request, pk):
-    """
-    1. Download image from S3 (or use s3_image_url).
-    2. Run local smartfarmcrophealth library.
-    3. Save result in RDS table.
-    4. Send message to SQS → Lambda will push to DynamoDB & SNS.
-    """
+   
     crop = get_object_or_404(Crop, pk=pk, user=request.user)
+
+    if crop.user != request.user:
+        messages.error(request, "Only the owner can analyze this crop.")
+        return redirect('crop_detail', pk=pk)
 
     if not crop.s3_image_url:
         messages.error(request, 'No S3 image URL found for this crop.')
         return redirect('crop_detail', pk=pk)
 
-    # Step 1: Download image (like your example)
     response = requests.get(crop.s3_image_url)
     if response.status_code != 200:
         messages.error(request, 'Failed to download image from S3.')
@@ -146,23 +157,20 @@ def analyze_crop_view(request, pk):
         tmp.write(response.content)
         tmp_path = tmp.name
 
-    # Step 2: Analyze locally using your PyPI library
     analyzer = CropHealthAnalyzer()
     result = analyzer.analyze_image(tmp_path)
 
-    # result might be dict or str; store as JSON/text
     if isinstance(result, dict):
         result_text = json.dumps(result, indent=2)
     else:
         result_text = str(result)
 
-    # Step 3: Update Crop in RDS
     crop.analyzed_result = result_text
     crop.status = 'analyzed'
     crop.analyzed_at = datetime.utcnow()
     crop.save()
 
-    # Step 4: Send message to SQS for Lambda to write DynamoDB & send SNS
+    # Sending message to SQS
     message_dict = {
         "username": request.user.username,
         "user_email": request.user.email,
