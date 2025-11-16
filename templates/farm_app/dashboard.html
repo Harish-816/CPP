@@ -1,0 +1,56 @@
+{% extends 'farm_app/base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title">Smart Farm Management & Crop Health Monitoring</h3>
+        <p class="mb-0">
+          This application allows farmers to securely upload crop images,
+          describe their farm conditions, and track crop health over time.
+          After uploading a crop, you can run an automated health analysis
+          using a smart image processing engine. The analysis results are
+          saved in your dashboard, while AWS services (S3, SQS, SNS, Lambda
+          and DynamoDB) work in the background to store data and send
+          notifications about your crop health insights.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Your Crops</h4>
+  <a class="btn btn-success" href="{% url 'crop_create' %}">+ Add New Crop</a>
+</div>
+
+{% if crops %}
+  <div class="row">
+    {% for crop in crops %}
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm">
+          {% if crop.s3_image_url %}
+            <img src="{{ crop.s3_image_url }}" class="card-img-top" alt="{{ crop.name }}">
+          {% else %}
+            <img src="{{ crop.image.url }}" class="card-img-top" alt="{{ crop.name }}">
+          {% endif %}
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">{{ crop.name }}</h5>
+            <p class="card-text small text-muted">
+              Status:
+              <span class="badge bg-{% if crop.status == 'analyzed' %}success{% else %}warning{% endif %}">
+                {{ crop.get_status_display }}
+              </span>
+            </p>
+            <p class="card-text flex-grow-1">{{ crop.summary|truncatechars:100 }}</p>
+            <a href="{% url 'crop_detail' crop.pk %}" class="btn btn-outline-success mt-auto">View Details</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>You have not added any crops yet. Click "Add New Crop" to get started.</p>
+{% endif %}
+{% endblock %}

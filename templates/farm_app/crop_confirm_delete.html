@@ -1,0 +1,19 @@
+{% extends 'farm_app/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title">Delete Crop</h3>
+        <p>Are you sure you want to delete "<strong>{{ crop.name }}</strong>"?</p>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Yes, delete</button>
+          <a href="{% url 'crop_detail' crop.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'farm_app/base.html' %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-3">
+      {% if crop.s3_image_url %}
+        <img src="{{ crop.s3_image_url }}" class="card-img-top" alt="{{ crop.name }}">
+      {% else %}
+        <img src="{{ crop.image.url }}" class="card-img-top" alt="{{ crop.name }}">
+      {% endif %}
+      <div class="card-body">
+        <h3 class="card-title">{{ crop.name }}</h3>
+        <p class="card-text">{{ crop.summary }}</p>
+
+        <p class="card-text">
+          Status:
+          <span class="badge bg-{% if crop.status == 'analyzed' %}success{% else %}warning{% endif %}">
+            {{ crop.get_status_display }}
+          </span>
+        </p>
+
+        <div class="mb-3">
+          <a href="{% url 'crop_update' crop.pk %}" class="btn btn-outline-primary btn-sm">Edit</a>
+          <a href="{% url 'crop_delete' crop.pk %}" class="btn btn-outline-danger btn-sm">Delete</a>
+        </div>
+
+        {% if crop.status == 'pending' %}
+          <a href="{% url 'crop_analyze' crop.pk %}" class="btn btn-success">
+            Analyze Crop Health
+          </a>
+        {% else %}
+          <p class="text-muted small mb-1">
+            Last analyzed at: {{ crop.analyzed_at|date:"Y-m-d H:i" }}
+          </p>
+          <a href="{% url 'crop_analyze' crop.pk %}" class="btn btn-outline-success btn-sm">
+            Re-run Analysis
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="card-title">Analysis Result</h4>
+        {% if crop.analyzed_result %}
+          <pre class="small bg-light p-3 rounded" style="white-space: pre-wrap;">{{ crop.analyzed_result }}</pre>
+        {% else %}
+          <p class="text-muted">No analysis results yet. Click "Analyze Crop Health" to run the analysis.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
