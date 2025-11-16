@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+AWS_REGION_NAME = os.environ.get('AWS_REGION_NAME', 'us-east-1')
+AWS_SECRET_NAME = os.environ.get('AWS_SECRET_NAME', 'smartfarm-secrets')
+
+from farm_app.aws_utils import get_aws_config
+get_secret = get_aws_config()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -75,10 +81,21 @@ WSGI_APPLICATION = 'smartfarm_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    'default': {    
+        'ENGINE': 'django.db.backends.postgresql', 
+        'HOST': get_secret['DB_HOSTNAME'],   
+        'USER': get_secret['DB_USERNAME'],    
+        'PASSWORD': get_secret['DB_PASSWORD'],
+        'NAME': get_secret['DB_DATABASE'],
+        'PORT': get_secret['DB_PORT'],
     }
 }
 
@@ -135,7 +152,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
-
-# AWS CONFIG (read from environment; actual details from Secrets Manager)
-AWS_REGION_NAME = os.environ.get('AWS_REGION_NAME', 'us-east-1')
-AWS_SECRET_NAME = os.environ.get('AWS_SECRET_NAME', 'smartfarm-secrets')
