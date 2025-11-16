@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smartfarmcrophealth"
+version = "2.0.0"
+description = "Crop health analysis library for Smart Farm applications."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Harish", email = "hariharan610@gmail.com" }
+]
+
+dependencies = [
+    "Pillow>=10.0.0"
+]
